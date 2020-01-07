@@ -1,0 +1,12 @@
+{
+  "name": "picture-organisation-utils",
+  "version": "0.0.0",
+  "description": "",
+  "scripts": {},
+  "author": "Mark Ormesher",
+  "license": "MIT",
+  "dependencies": {
+    "glob": "^7.1.6",
+    "sqlite3": "^4.1.1"
+  }
+}
