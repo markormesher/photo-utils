@@ -3,7 +3,7 @@ const { exec } = require("child_process");
 (async () => {
   try {
     const args = process.argv.slice(2);
-    const files = args.filter((a) => a.substr(0, 1) !== "-");
+    let files = args.filter((a) => a.substr(0, 1) !== "-");
     const flags = args.filter((a) => a.substr(0, 1) == "-");
 
     for (const file of files) {
@@ -12,12 +12,23 @@ const { exec } = require("child_process");
       }
     }
 
-    if (flags.indexOf("-lower") >= 0) {
+    let didAction = false;
+    if (flags.indexOf("-mode") >= 0 || flags.indexOf("-all") >= 0) {
+      didAction = true;
+      await doFixFileMode(files, flags);
+    }
+    if (flags.indexOf("-lower") >= 0 || flags.indexOf("-all") >= 0) {
+      didAction = true;
       await doRenameToLowercase(files, flags);
-    } else if (flags.indexOf("-hash") >= 0) {
+      files = files.map((f) => f.toLowerCase());
+    }
+    if (flags.indexOf("-hash") >= 0 || flags.indexOf("-all") >= 0) {
+      didAction = true;
       await doRenameToHash(files, flags);
-    } else {
-      throw new Error("Must provide an action flag, one of -lower, -hash");
+    }
+
+    if (!didAction) {
+      throw new Error("Must provide at least one action flag, one of -mode, -lower, -hash");
     }
   } catch (e) {
     console.log("Exception caught!");
@@ -25,22 +36,48 @@ const { exec } = require("child_process");
   }
 })();
 
+async function doFixFileMode(files, flags) {
+  console.log("Fixing file modes...");
+
+  for (const file of files) {
+    const currentMode = (await execCommand(`stat -c '%a' "${file}"`)).trim();
+    if (currentMode !== "644") {
+      const command = `chmod 644 "${file}"`;
+      if (flags.indexOf("-dry") >= 0) {
+        console.log(command);
+      } else {
+        await execCommand(command);
+      }
+    }
+  }
+
+  console.log("Done");
+  console.log("");
+}
+
 async function doRenameToLowercase(files, flags) {
+  console.log("Renaming files to lower case...");
+
   for (const file of files) {
     const fromFile = file;
     const toFile = file.toLowerCase();
     if (fromFile !== toFile) {
+      const command = `mv "${fromFile}" "${toFile}"`;
       if (flags.indexOf("-dry") >= 0) {
-        console.log(`"${fromFile}"  =>  "${toFile}"`);
+        console.log(command);
       } else {
-        await execCommand(`mv "${fromFile}" "${toFile}"`);
-        console.log(`"${fromFile}"  =>  "${toFile}"`);
+        await execCommand(command);
       }
     }
   }
+
+  console.log("Done");
+  console.log("");
 }
 
 async function doRenameToHash(files, flags) {
+  console.log("Renaming files to hashes...");
+
   for (const file of files) {
     if (file !== file.toLowerCase()) {
       throw new Error(`Files should be lowercased with "rename 'y/A-Z/a-z/ *'" first`);
@@ -95,18 +132,19 @@ async function doRenameToHash(files, flags) {
     for (const ext of details.allExtensions) {
       const fromFile = details.rootFileName + ext;
       const toFile = hash + ext;
-      if (fromFile === toFile) {
-        console.log(`Skipping "${fromFile}"`);
-      } else {
+      if (fromFile !== toFile) {
+        const command = `mv "${fromFile}" "${toFile}"`;
         if (flags.indexOf("-dry") >= 0) {
-          console.log(`"${fromFile}"  =>  "${toFile}"`);
+          console.log(command);
         } else {
-          await execCommand(`mv "${fromFile}" "${toFile}"`);
-          console.log(`"${fromFile}"  =>  "${toFile}"`);
+          await execCommand(command);
         }
       }
     }
   }
+
+  console.log("Done");
+  console.log("");
 }
 
 async function execCommand(command) {

@@ -66,9 +66,9 @@ const digiKamDb = new sqlite3.Database("/opt/digikam/digikam4.db");
       // work out which image will be the "front" of the group
       const frontImage = pickFrontImage(imageSet);
       const frontImageId = await getImageId(frontImage);
-        if (!frontImageId) {
-          throw new Error(`Couldn't find ID for image ${frontImage}`);
-        }
+      if (!frontImageId) {
+        throw new Error(`Couldn't find ID for image ${frontImage}`);
+      }
 
       // apply changes to the DB
       for (const image of imageSet) {
@@ -160,5 +160,12 @@ async function applyImageTag(imageId, tagId) {
 }
 
 function pickFrontImage(images) {
-  return images.filter((image) => image.indexOf("_export") >= 0).sort()[0];
+  const termPriority = ["_composite", "_export"];
+  for (const term of termPriority) {
+    const matchingImages = images.filter((image) => image.indexOf(term) >= 0);
+    if (matchingImages.length > 0) {
+      return matchingImages.sort()[0];
+    }
+  }
+  throw new Error(`Couldn't determine first image for set ${images}`);
 }
