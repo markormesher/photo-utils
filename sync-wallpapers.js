@@ -58,7 +58,7 @@ const digiKamDb = new sqlite3.Database("/opt/digikam/digikam4.db");
     for (const wallpaper of newWallpapers) {
       const chunks = wallpaper.split("/");
       const baseName = chunks[chunks.length - 1];
-      await execCommand(`ln -s "${picturesDir}${wallpaper}" "${picturesDir}/${wallpaperDirName}/${baseName}"`);
+      await execCommand(`cp "${picturesDir}${wallpaper}" "${picturesDir}/${wallpaperDirName}/${baseName}"`);
       ++wallpapersSet;
     }
 
