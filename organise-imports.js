@@ -2,52 +2,36 @@ const { exec } = require("child_process");
 
 (async () => {
   try {
-    const args = process.argv.slice(2);
-    let files = args.filter((a) => a.substr(0, 1) !== "-");
-    const flags = args.filter((a) => a.substr(0, 1) == "-");
+    let files = process.argv.slice(2);
+    if (files.length === 0) {
+      throw new Error("Error: no files provided")
+    }
 
     for (const file of files) {
       if (file.indexOf("/") >= 0) {
-        throw new Error("This script should be invoked from the same directory as the photos");
+        // TODO: handle calling this from anywhere
+        throw new Error("Error: this script should be invoked from the same directory as the photos");
       }
     }
 
-    let didAction = false;
-    if (flags.indexOf("-mode") >= 0 || flags.indexOf("-all") >= 0) {
-      didAction = true;
-      await doFixFileMode(files, flags);
-    }
-    if (flags.indexOf("-lower") >= 0 || flags.indexOf("-all") >= 0) {
-      didAction = true;
-      await doRenameToLowercase(files, flags);
-      files = files.map((f) => f.toLowerCase());
-    }
-    if (flags.indexOf("-hash") >= 0 || flags.indexOf("-all") >= 0) {
-      didAction = true;
-      await doRenameToHash(files, flags);
-    }
-
-    if (!didAction) {
-      throw new Error("Must provide at least one action flag, one of -mode, -lower, -hash");
-    }
+    await doFixFileMode(files);
+    await doRenameToLowercase(files);
+    files = files.map((f) => f.toLowerCase());
+    await doRenameToHash(files);
   } catch (e) {
     console.log("Exception caught!");
     console.log(e);
   }
 })();
 
-async function doFixFileMode(files, flags) {
+async function doFixFileMode(files) {
   console.log("Fixing file modes...");
 
   for (const file of files) {
     const currentMode = (await execCommand(`stat -c '%a' "${file}"`)).trim();
     if (currentMode !== "644") {
       const command = `chmod 644 "${file}"`;
-      if (flags.indexOf("-dry") >= 0) {
-        console.log(command);
-      } else {
-        await execCommand(command);
-      }
+      await execCommand(command);
     }
   }
 
@@ -55,7 +39,7 @@ async function doFixFileMode(files, flags) {
   console.log("");
 }
 
-async function doRenameToLowercase(files, flags) {
+async function doRenameToLowercase(files) {
   console.log("Renaming files to lower case...");
 
   for (const file of files) {
@@ -63,11 +47,7 @@ async function doRenameToLowercase(files, flags) {
     const toFile = file.toLowerCase();
     if (fromFile !== toFile) {
       const command = `mv "${fromFile}" "${toFile}"`;
-      if (flags.indexOf("-dry") >= 0) {
-        console.log(command);
-      } else {
-        await execCommand(command);
-      }
+      await execCommand(command);
     }
   }
 
@@ -75,7 +55,7 @@ async function doRenameToLowercase(files, flags) {
   console.log("");
 }
 
-async function doRenameToHash(files, flags) {
+async function doRenameToHash(files) {
   console.log("Renaming files to hashes...");
 
   for (const file of files) {
@@ -99,7 +79,7 @@ async function doRenameToHash(files, flags) {
   }
 
   // build a map of primary files to secondary files to move together
-  const possibleExtensions = [".nef", ".jpg", ".nef.xmp", ".jpg.xmp"];
+  const possibleExtensions = [".nef", ".jpg", ".mov", ".nef.xmp", ".jpg.xmp", ".mov.xmp"];
   const fileDetails = []
   for (const rootFileName of rootFileNames) {
     const allExtensions = []
@@ -134,11 +114,7 @@ async function doRenameToHash(files, flags) {
       const toFile = hash + ext;
       if (fromFile !== toFile) {
         const command = `mv "${fromFile}" "${toFile}"`;
-        if (flags.indexOf("-dry") >= 0) {
-          console.log(command);
-        } else {
-          await execCommand(command);
-        }
+        await execCommand(command);
       }
     }
   }
