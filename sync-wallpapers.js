@@ -8,7 +8,7 @@ const wallpaperTags = ["Wallpaper"];
 const picturesDir = os.homedir() + "/Pictures";
 const wallpaperDirName = ".Wallpapers";
 
-const digiKamDb = new sqlite3.Database("/opt/digikam/digikam4.db");
+const digiKamDb = new sqlite3.Database(os.homedir() + "/Pictures/.digikam/digikam4.db");
 
 (async () => {
   try {

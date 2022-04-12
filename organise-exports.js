@@ -13,7 +13,7 @@ console.log("Press [enter] to continue...");
 
 require("child_process").spawnSync("read _ ", {shell: true, stdio: [0, 1, 2]});
 
-const digiKamDb = new sqlite3.Database("/opt/digikam/digikam4.db");
+const digiKamDb = new sqlite3.Database(os.homedir() + "/Pictures/.digikam/digikam4.db");
 
 (async () => {
   try {
