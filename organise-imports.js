@@ -107,7 +107,7 @@ async function doRenameToHash(files) {
   // gather file hashes and move the files
   for (const details of fileDetails) {
     const primaryFile = details.rootFileName + details.primaryExtension;
-    const hash = (await execCommand(`sha256sum ${primaryFile} | awk '{print $1}'`)).trim();
+    const hash = (await execCommand(`sha256sum "${primaryFile}" | awk '{print $1}'`)).trim();
 
     for (const ext of details.allExtensions) {
       const fromFile = details.rootFileName + ext;
