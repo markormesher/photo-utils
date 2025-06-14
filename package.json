@@ -7,6 +7,6 @@
   "license": "MIT",
   "dependencies": {
     "glob": "^7.1.6",
-    "sqlite3": "5.1.5"
+    "sqlite3": "5.1.7"
   }
 }
